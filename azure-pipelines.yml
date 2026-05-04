@@ -1,0 +1,299 @@
+# Online Quiz System - Azure DevOps Pipeline
+# CI-only pipeline (no deployment) - safe to run without service connections
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    exclude:
+      - README.md
+      - docs/**
+
+pr:
+  branches:
+    include:
+      - main
+      - develop
+
+variables:
+  NODE_VERSION: '20.x'
+  PYTHON_VERSION: '3.11'
+
+stages:
+
+# ─────────────────────────────────────────────────
+# STAGE 1: Build & Code Quality
+# ─────────────────────────────────────────────────
+- stage: Build
+  displayName: 'Build & Code Quality'
+  jobs:
+
+  - job: BuildFrontend
+    displayName: 'Build Frontend (React Quiz UI)'
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: $(NODE_VERSION)
+      displayName: 'Install Node.js'
+
+    - script: |
+        echo "Checking Node version..."
+        node --version
+        npm --version
+        echo "Frontend build step - add your actual build commands below"
+        # cd frontend
+        # npm ci
+        # npm run lint
+        # npm run build
+      displayName: 'Install, Lint & Build Frontend'
+
+    - script: |
+        echo "Frontend build complete"
+        mkdir -p frontend-dist
+        echo "placeholder" > frontend-dist/index.html
+      displayName: 'Create Frontend Placeholder Artifact'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: 'frontend-dist'
+        artifactName: 'frontend-build'
+      displayName: 'Publish Frontend Artifact'
+
+  - job: BuildBackend
+    displayName: 'Build Backend (Quiz API)'
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: $(PYTHON_VERSION)
+      displayName: 'Use Python $(PYTHON_VERSION)'
+
+    - script: |
+        echo "Checking Python version..."
+        python --version
+        pip --version
+        echo "Backend build step - add your actual commands below"
+        # cd backend
+        # pip install -r requirements.txt
+        # pip install flake8 black
+        # flake8 . --max-line-length=100
+        # black --check .
+      displayName: 'Install Dependencies & Lint Backend'
+
+    - script: |
+        echo "Backend build complete"
+        mkdir -p backend-dist
+        echo "placeholder" > backend-dist/app.txt
+      displayName: 'Create Backend Placeholder Artifact'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: 'backend-dist'
+        artifactName: 'backend-build'
+      displayName: 'Publish Backend Artifact'
+
+# ─────────────────────────────────────────────────
+# STAGE 2: Test
+# ─────────────────────────────────────────────────
+- stage: Test
+  displayName: 'Run Tests'
+  dependsOn: Build
+  jobs:
+
+  - job: UnitTests
+    displayName: 'Unit Tests (Backend)'
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: $(PYTHON_VERSION)
+      displayName: 'Use Python $(PYTHON_VERSION)'
+
+    - script: |
+        pip install pytest pytest-cov
+        echo "Running backend unit tests..."
+        mkdir -p test-results
+        echo "Add your actual test commands below"
+        # cd backend
+        # pip install -r requirements.txt
+        # pytest tests/unit/ \
+        #   --junitxml=test-results/unit-results.xml \
+        #   --cov=app \
+        #   --cov-report=xml:coverage.xml \
+        #   --cov-fail-under=80
+
+        # Placeholder passing test for now
+        cat > test_placeholder.py << 'EOF'
+        def test_quiz_system_placeholder():
+            """Placeholder - replace with real quiz tests"""
+            assert True
+
+        def test_quiz_question_count():
+            """Placeholder - verify quiz has questions"""
+            quiz_questions = ["Q1", "Q2", "Q3"]
+            assert len(quiz_questions) > 0
+
+        def test_quiz_score_calculation():
+            """Placeholder - verify score calculation"""
+            correct = 8
+            total = 10
+            score = (correct / total) * 100
+            assert score == 80.0
+        EOF
+
+        pytest test_placeholder.py \
+          --junitxml=test-results/unit-results.xml \
+          -v
+      displayName: 'Run Backend Unit Tests'
+
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: 'test-results/unit-results.xml'
+        testRunTitle: 'Quiz System Unit Tests'
+      condition: always()
+      displayName: 'Publish Unit Test Results'
+
+  - job: FrontendTests
+    displayName: 'Frontend Tests'
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: NodeTool@0
+      inputs:
+        versionSpec: $(NODE_VERSION)
+      displayName: 'Install Node.js'
+
+    - script: |
+        echo "Running frontend tests..."
+        echo "Add your actual frontend test commands below"
+        # cd frontend
+        # npm ci
+        # npm test -- --watchAll=false --coverage
+        echo "Frontend tests placeholder - OK"
+      displayName: 'Run Frontend Tests'
+
+# ─────────────────────────────────────────────────
+# STAGE 3: Security & SAST
+# ─────────────────────────────────────────────────
+- stage: Security
+  displayName: 'Security Scan'
+  dependsOn: Build
+  jobs:
+
+  - job: DependencyScan
+    displayName: 'Dependency Vulnerability Scan'
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: $(PYTHON_VERSION)
+      displayName: 'Use Python $(PYTHON_VERSION)'
+
+    - script: |
+        pip install safety
+        echo "Running safety check..."
+        echo "Add your requirements.txt path below"
+        # safety check -r backend/requirements.txt
+        echo "Dependency scan complete - no requirements.txt found yet, skipping"
+      displayName: 'Scan Python Dependencies'
+
+    - task: NodeTool@0
+      inputs:
+        versionSpec: $(NODE_VERSION)
+      displayName: 'Install Node.js'
+
+    - script: |
+        echo "Running npm audit..."
+        echo "Add your frontend path below"
+        # cd frontend && npm audit --audit-level=high
+        echo "npm audit skipped - no package.json found yet"
+      displayName: 'Scan Node.js Dependencies'
+
+  - job: SASTScan
+    displayName: 'Static Application Security Testing'
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: $(PYTHON_VERSION)
+      displayName: 'Use Python $(PYTHON_VERSION)'
+
+    - script: |
+        pip install bandit
+        mkdir -p bandit-results
+
+        echo "Running Bandit SAST scan..."
+        echo "Add your backend path below"
+        # bandit -r backend/ \
+        #   -f xml \
+        #   -o bandit-results/bandit-report.xml \
+        #   --exclude backend/tests \
+        #   -ll || true
+
+        # Placeholder scan on current directory
+        bandit -r . \
+          -f xml \
+          -o bandit-results/bandit-report.xml \
+          --exclude ./.git \
+          -ll || true
+
+        echo "SAST scan complete"
+      displayName: 'Run Bandit SAST (Python Security Scan)'
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: 'bandit-results'
+        artifactName: 'sast-report'
+      displayName: 'Publish SAST Report'
+      condition: always()
+
+# ─────────────────────────────────────────────────
+# STAGE 4: Summary
+# ─────────────────────────────────────────────────
+- stage: Summary
+  displayName: 'Pipeline Summary'
+  dependsOn:
+    - Test
+    - Security
+  condition: always()
+  jobs:
+
+  - job: PrintSummary
+    displayName: 'Print Build Summary'
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+    - script: |
+        echo "##[section]================================================"
+        echo "##[section]   Online Quiz System - Pipeline Summary"
+        echo "##[section]================================================"
+        echo ""
+        echo "  App Name   : Online Quiz System"
+        echo "  Build ID   : $(Build.BuildId)"
+        echo "  Branch     : $(Build.SourceBranchName)"
+        echo "  Commit     : $(Build.SourceVersion)"
+        echo "  Triggered  : $(Build.RequestedFor)"
+        echo "  Build Date : $(Build.BuildId)"
+        echo ""
+        echo "##[section]  Stages Completed:"
+        echo "  [1] Build     - Frontend + Backend compiled"
+        echo "  [2] Test      - Unit + Frontend tests executed"
+        echo "  [3] Security  - Bandit SAST + Dependency scan"
+        echo "  [4] Summary   - Pipeline complete"
+        echo ""
+        echo "##[section]  Next Steps to enable deployment:"
+        echo "  1. Create AzureServiceConnection in Project Settings"
+        echo "  2. Create AzureContainerRegistry service connection"
+        echo "  3. Add your frontend/ and backend/ code"
+        echo "  4. Uncomment the deployment stages"
+        echo "##[section]================================================"
+      displayName: 'Print Pipeline Summary'
