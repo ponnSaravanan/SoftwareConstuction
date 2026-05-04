@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0d;
+      --panel: #141414;
+      --border: #2a2a2a;
+      --accent: #c8f04a;
+      --accent-dim: rgba(200,240,74,0.12);
+      --text: #f0ede6;
+      --muted: #5a5a5a;
+      --error: #ff5c5c;
+      --radius: 2px;
+    }
+
+    body {
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Mono', monospace;
+      color: var(--text);
+      overflow-y: auto;
+      padding: 40px 16px;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(200,240,74,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200,240,74,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      animation: gridShift 20s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes gridShift {
+      0%   { transform: translate(0,0); }
+      100% { transform: translate(40px,40px); }
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(200,240,74,0.06) 0%, transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      pointer-events: none;
+      animation: pulse 6s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { opacity:.5; transform:translate(-50%,-50%) scale(1); }
+      50%      { opacity:1;  transform:translate(-50%,-50%) scale(1.1); }
+    }
+
+    .card {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 460px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 48px 44px 40px;
+      animation: slideUp 0.6s cubic-bezier(0.16,1,0.3,1) both;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+
+    @keyframes slideUp {
+      from { opacity:0; transform:translateY(30px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .eyebrow {
+      font-size: 10px; letter-spacing: .3em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .eyebrow::before { content:''; display:inline-block; width:16px; height:1px; background:var(--accent); }
+
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 36px; font-weight: 400; line-height: 1.1;
+      color: var(--text); margin-bottom: 28px; letter-spacing: -.02em;
+    }
+    h1 em { font-style: italic; color: var(--accent); }
+
+    .demo-hint {
+      background: var(--accent-dim);
+      border: 1px solid rgba(200,240,74,.2);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-size: 11px; color: var(--accent);
+      margin-bottom: 24px; letter-spacing: .03em; line-height: 1.6;
+    }
+    .demo-hint strong { display:block; margin-bottom:2px; letter-spacing:.1em; font-size:10px; }
+
+    .section-label {
+      font-size: 9px; letter-spacing: .25em; text-transform: uppercase;
+      color: var(--muted); margin: 22px 0 14px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    .field { margin-bottom: 14px; position: relative; }
+
+    label {
+      display: block; font-size: 10px; letter-spacing: .2em;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 7px; transition: color .2s;
+    }
+    .field:focus-within label { color: var(--accent); }
+
+    .input-wrap { position: relative; }
+
+    input, select, textarea {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      color: var(--text); font-family: 'DM Mono', monospace;
+      font-size: 13px; padding: 13px 14px; outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      border-radius: var(--radius); appearance: none;
+    }
+    textarea { resize: vertical; min-height: 72px; line-height: 1.5; }
+    select {
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235a5a5a'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px;
+    }
+    select option { background: #1a1a1a; }
+    input::placeholder, textarea::placeholder { color: var(--muted); }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+    input.err, select.err, textarea.err {
+      border-color: var(--error); box-shadow: 0 0 0 3px rgba(255,92,92,.1);
+    }
+
+    .toggle-pwd {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; padding: 0;
+      color: var(--muted); font-size: 11px; font-family: 'DM Mono', monospace;
+      letter-spacing: .05em; transition: color .2s;
+    }
+    .toggle-pwd:hover { color: var(--accent); }
+
+    .field-error {
+      font-size: 11px; color: var(--error); margin-top: 5px;
+      display: none; animation: fadeIn .2s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity:0; transform:translateY(-4px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .field-error.on { display: block; }
+
+    .extras { display:flex; justify-content:flex-end; margin-bottom:22px; }
+    .extras a { font-size:11px; color:var(--muted); text-decoration:none; letter-spacing:.05em; transition:color .2s; }
+    .extras a:hover { color:var(--accent); }
+
+    .btn {
+      width: 100%; background: var(--accent); color: var(--bg);
+      border: none; padding: 15px;
+      font-family: 'DM Mono', monospace; font-size: 12px;
+      font-weight: 500; letter-spacing: .2em; text-transform: uppercase;
+      cursor: pointer; border-radius: var(--radius);
+      position: relative; overflow: hidden;
+      transition: transform .15s, box-shadow .15s; margin-top: 4px;
+    }
+    .btn::after { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,.15) 0%,transparent 60%); pointer-events:none; }
+    .btn:hover { transform:translateY(-1px); box-shadow:0 8px 24px rgba(200,240,74,.25); }
+    .btn:active { transform:translateY(0); box-shadow:none; }
+    .btn.loading { pointer-events:none; opacity:.7; }
+
+    .divider { border:none; border-top:1px solid var(--border); margin:22px 0 18px; }
+    .signup-prompt { text-align:center; font-size:11px; color:var(--muted); letter-spacing:.05em; }
+    .signup-prompt a { color:var(--text); text-decoration:none; border-bottom:1px solid var(--border); transition:color .2s,border-color .2s; }
+    .signup-prompt a:hover { color:var(--accent); border-color:var(--accent); }
+
+    /* Success */
+    .success-panel { display:none; text-align:center; padding:20px 0 10px; }
+    .success-panel.on { display:block; }
+    .success-icon {
+      width:56px; height:56px; border:2px solid var(--accent); border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      margin:0 auto 20px; font-size:22px;
+      animation:popIn .4s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    @keyframes popIn { from{transform:scale(0);opacity:0;} to{transform:scale(1);opacity:1;} }
+    .success-panel h2 { font-family:'DM Serif Display',serif; font-size:26px; font-weight:400; margin-bottom:8px; color:var(--accent); }
+    .success-panel p  { font-size:12px; color:var(--muted); letter-spacing:.05em; line-height:1.7; }
+    .s-highlight { color:var(--text); }
+
+    /* Toast */
+    .toast {
+      position:fixed; bottom:28px; left:50%;
+      transform:translateX(-50%) translateY(20px);
+      background:var(--panel); border:1px solid var(--border);
+      padding:13px 22px; font-size:12px; letter-spacing:.04em;
+      display:flex; align-items:center; gap:10px;
+      opacity:0; transition:opacity .3s,transform .3s;
+      z-index:100; border-radius:var(--radius); min-width:260px; justify-content:center;
+    }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    .toast.success { border-color:var(--accent); }
+    .toast.fail    { border-color:var(--error); }
+    .tdot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .toast.success .tdot { background:var(--accent); }
+    .toast.fail    .tdot { background:var(--error); }
+
+    @keyframes shake {
+      0%,100%{transform:translateX(0);}
+      20%,60%{transform:translateX(-6px);}
+      40%,80%{transform:translateX(6px);}
+    }
+    .shake { animation:shake .4s ease; }
+  </style>
+</head>
+<body>
+
+<div class="card" id="card">
+
+  <!-- ── Login View ───────────────────────────────────── -->
+  <div id="loginView">
+    <div class="eyebrow">Secure Access</div>
+    <h1>Welcome<br><em>back.</em></h1>
+
+    <div class="demo-hint">
+      <strong>✦ How to log in</strong>
+      Enter any valid email address and a password with at least 6 characters.
+    </div>
+
+    <!-- Personal Info -->
+    <div class="section-label">Personal Info</div>
+    <div class="row">
+      <div class="field">
+        <label for="firstName">First Name</label>
+        <input type="text" id="firstName" placeholder="Jane"/>
+        <div class="field-error" id="fe-firstName">First name required.</div>
+      </div>
+      <div class="field">
+        <label for="lastName">Last Name</label>
+        <input type="text" id="lastName" placeholder="Doe"/>
+        <div class="field-error" id="fe-lastName">Last name required.</div>
+      </div>
+    </div>
+
+    <!-- Address -->
+    <div class="section-label">Address</div>
+    <div class="field">
+      <label for="street">Street Address</label>
+      <input type="text" id="street" placeholder="123 Main Street"/>
+      <div class="field-error" id="fe-street">Street address required.</div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="city">City</label>
+        <input type="text" id="city" placeholder="Chennai"/>
+        <div class="field-error" id="fe-city">City required.</div>
+      </div>
+      <div class="field">
+        <label for="zip">ZIP / Postal</label>
+        <input type="text" id="zip" placeholder="600001"/>
+        <div class="field-error" id="fe-zip">Enter a valid code.</div>
+      </div>
+    </div>
+    <div class="field">
+      <label for="country">Country</label>
+      <select id="country">
+        <option value="">Select country…</option>
+        <option>India</option>
+        <option>United States</option>
+        <option>United Kingdom</option>
+        <option>Canada</option>
+        <option>Australia</option>
+        <option>Germany</option>
+        <option>France</option>
+        <option>Japan</option>
+        <option>Other</option>
+      </select>
+      <div class="field-error" id="fe-country">Please select a country.</div>
+    </div>
+
+    <!-- Credentials -->
+    <div class="section-label">Credentials</div>
+    <div class="field">
+      <label for="email">Email Address</label>
+      <input type="email" id="email" placeholder="you@example.com" autocomplete="email"/>
+      <div class="field-error" id="fe-email">Enter a valid email address.</div>
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <div class="input-wrap">
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"/>
+        <button class="toggle-pwd" id="togglePwd" type="button">show</button>
+      </div>
+      <div class="field-error" id="fe-password">Password must be at least 6 characters.</div>
+    </div>
+
+    <div class="extras"><a href="#">Forgot password?</a></div>
+
+    <button class="btn" id="loginBtn" type="button">
+      <span id="btnText">Sign In</span>
+    </button>
+
+    <hr class="divider"/>
+    <p class="signup-prompt">Don't have an account? <a href="#">Create one →</a></p>
+  </div>
+
+  <!-- ── Success View ─────────────────────────────────── -->
+  <div class="success-panel" id="successPanel">
+    <div class="success-icon">✓</div>
+    <h2>Access Granted</h2>
+    <p>Signed in as <span class="s-highlight" id="sName"></span></p>
+    <p style="margin-top:4px;"><span class="s-highlight" id="sEmail"></span></p>
+    <p style="margin-top:12px;font-size:11px;">📍 <span id="sAddr"></span></p>
+    <hr class="divider" style="margin-top:28px;"/>
+    <button class="btn" onclick="resetForm()">Sign Out</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <span class="tdot"></span>
+  <span id="toastMsg"></span>
+</div>
+
+<script>
+  const G = id => document.getElementById(id);
+
+  const FIELDS = ['firstName','lastName','street','city','zip','country','email','password'];
+
+  // Live clear errors
+  FIELDS.forEach(k => {
+    const el = G(k);
+    el.addEventListener('input',  () => clr(k));
+    el.addEventListener('change', () => clr(k));
+  });
+
+  // Enter key support
+  FIELDS.forEach(k => G(k).addEventListener('keydown', e => { if(e.key==='Enter') login(); }));
+
+  // Toggle password
+  G('togglePwd').addEventListener('click', () => {
+    const p = G('password');
+    const hide = p.type === 'password';
+    p.type = hide ? 'text' : 'password';
+    G('togglePwd').textContent = hide ? 'hide' : 'show';
+  });
+
+  function isEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()); }
+  function isZip(v)  { return /^[A-Za-z0-9\s\-]{3,10}$/.test(v.trim()); }
+
+  function err(k, msg){
+    G(k).classList.add('err');
+    const fe = G('fe-'+k);
+    if(msg) fe.textContent = msg;
+    fe.classList.add('on');
+  }
+  function clr(k){
+    G(k).classList.remove('err');
+    G('fe-'+k).classList.remove('on');
+  }
+
+  function toast(msg, type){
+    const t = G('toast');
+    t.className = 'toast ' + type;
+    G('toastMsg').textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3800);
+  }
+
+  function shake(){
+    const c = G('card');
+    c.classList.remove('shake');
+    void c.offsetWidth;
+    c.classList.add('shake');
+  }
+
+  G('loginBtn').addEventListener('click', login);
+
+  function login(){
+    let ok = true;
+
+    const fn = G('firstName').value.trim();
+    const ln = G('lastName').value.trim();
+    const st = G('street').value.trim();
+    const ci = G('city').value.trim();
+    const zp = G('zip').value.trim();
+    const co = G('country').value;
+    const em = G('email').value.trim();
+    const pw = G('password').value;
+
+    if(!fn)           { err('firstName','First name is required.');         ok=false; } else clr('firstName');
+    if(!ln)           { err('lastName', 'Last name is required.');          ok=false; } else clr('lastName');
+    if(!st)           { err('street',   'Street address is required.');     ok=false; } else clr('street');
+    if(!ci)           { err('city',     'City is required.');               ok=false; } else clr('city');
+    if(!zp)           { err('zip',      'ZIP / postal code is required.');  ok=false; }
+    else if(!isZip(zp)){ err('zip',     'Enter a valid ZIP/postal code.');  ok=false; } else clr('zip');
+    if(!co)           { err('country',  'Please select a country.');        ok=false; } else clr('country');
+    if(!em)           { err('email',    'Email address is required.');      ok=false; }
+    else if(!isEmail(em)){ err('email','Enter a valid email address.');     ok=false; } else clr('email');
+    if(!pw)           { err('password', 'Password is required.');           ok=false; }
+    else if(pw.length<6){ err('password','Password must be at least 6 characters.'); ok=false; } else clr('password');
+
+    if(!ok){ shake(); return; }
+
+    const btn = G('loginBtn'), txt = G('btnText');
+    txt.textContent = 'Verifying…';
+    btn.classList.add('loading');
+
+    // ✅ Accept any valid email + password ≥ 6 chars (no hardcoded user list)
+    setTimeout(() => {
+      btn.classList.remove('loading');
+      txt.textContent = 'Sign In';
+
+      G('sName').textContent  = fn + ' ' + ln;
+      G('sEmail').textContent = em;
+      G('sAddr').textContent  = `${st}, ${ci} ${zp}, ${co}`;
+
+      G('loginView').style.display = 'none';
+      G('successPanel').classList.add('on');
+
+      toast('✓  Welcome, ' + fn + '!', 'success');
+    }, 900);
+  }
+
+  function resetForm(){
+    FIELDS.forEach(k => { G(k).value=''; clr(k); });
+    G('password').type = 'password';
+    G('togglePwd').textContent = 'show';
+    G('loginView').style.display = '';
+    G('successPanel').classList.remove('on');
+  }
+</script>
+</body>
+</html>
